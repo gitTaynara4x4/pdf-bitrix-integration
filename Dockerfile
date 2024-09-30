@@ -15,4 +15,4 @@ COPY . /app
 
 EXPOSE 7898
 
-CMD ["python", "comapifeita.py"]
+CMD ["python", "main.py"]
