@@ -327,4 +327,4 @@ def processar():
     return jsonify({'status': 'PDF processado com sucesso.'})
 
 if __name__ == "__main__":
-    app.run(port=7898, host ='0.0.0.0')
+    app.run(port=6686, host ='0.0.0.0')
