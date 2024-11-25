@@ -3,24 +3,6 @@ import requests
 
 app = Flask(__name__)
 
-# Mapeamento dos IDs para os nomes
-responsaveis = {
-    "148": "Geovanna Emanuelly",
-    "154": "Gustavo Inácio",
-    "158": "Felipe Marchezine",
-    "34874": "Taynara Francine",
-    "43180": "Sabrina Emanuelle",
-    "48604": "Ian Henrique",
-    "48618": "Tiago Martins",
-    "48674": "Caio Sales",
-    "49718": "Italo Almeida",
-    "48678": "Jéssica Hellen",
-    "49722": "Laisa Reis",
-    "34794": "Treinamento 01",
-    "48596": "Treinamento 02",
-    "48610": "Treinamento 03",
-    "48612": "Treinamento 04"
-}
 
 # Webhook do Bitrix24
 webhook_url = "https://marketingsolucoes.bitrix24.com.br/rest/35002/7a2nuej815yjx5bg/"
