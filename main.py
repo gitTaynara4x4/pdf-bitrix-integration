@@ -333,6 +333,10 @@ def processar():
         # 'radio_group_88ustu': 'Value_lirc',
         # 'radio_group_89dttg': 'Value_neml',
         # 'radio_group_91molt': 'Value_pkjn',
+        "Caixa de sele#C3#A7#C3#A3o 1_3": "Yes",
+        "Caixa de sele#C3#A7#C3#A3o 2_4": "Yes",
+        "Caixa de sele#C3#A7#C3#A3o 3_3": "Yes",
+        "Caixa de sele#C3#A7#C3#A3o 4_4": "Yes",
         "Caixa de texto 1_3": formatar_data_para_pdf(
             dados_bitrix.get("UF_CRM_1706040523430", "")
         ),
