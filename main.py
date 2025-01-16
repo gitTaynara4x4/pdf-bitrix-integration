@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 import base64
+import subprocess
 
 # Configuração do Flask
 app = Flask(__name__)
@@ -267,6 +268,36 @@ def atualizar_campos_com_base_no_id(dados_bitrix, novos_campos_valores):
         novos_campos_valores["fem"] = "Yes"
     return novos_campos_valores
 
+def file_to_base64(file_path):
+    with open(file_path, "rb") as file:
+        return base64.b64encode(file.read()).decode("utf-8")
+
+import subprocess
+import os
+
+def comprimir_pdf_com_ghostscript(input_path, output_path):
+    """
+    Comprime o arquivo PDF usando Ghostscript.
+    """
+    try:
+        command = [
+            "gswin64c",  # Certifique-se de que o Ghostscript está instalado e configurado no PATH
+            "-sDEVICE=pdfwrite",
+            "-dCompatibilityLevel=1.4",
+            "-dPDFSETTINGS=/ebook",  # Nível de compressão (pode usar /screen, /ebook, /printer ou /prepress)
+            "-dNOPAUSE",
+            "-dBATCH",
+            "-dQUIET",
+            f"-sOutputFile={output_path}",
+            input_path,
+        ]
+
+        subprocess.run(command, check=True)
+        return output_path
+    except Exception as e:
+        logger.error(f"Erro ao comprimir o PDF com Ghostscript: {e}")
+        return input_path
+
 
 @app.route("/processar", methods=["POST"])
 def processar():
@@ -319,20 +350,7 @@ def processar():
         "Caixa de texto 10": dados_bitrix.get("UF_CRM_1700661252544", ""),
         "Caixa de texto 11": dados_bitrix.get("UF_CRM_1700661287551", ""),
         "Caixa de texto 12": dados_bitrix.get("UF_CRM_1700661275591", ""),
-        # 'text_9hsdr': '',
         "Caixa de texto 15": dados_bitrix.get("UF_CRM_1700661314351", ""),
-        # 'text_12zlqe': '',
-        # 'radio_group_36ssax': 'Value_kjhe',
-        # 'radio_group_52updr': 'Value_zeqg',
-        # 'radio_group_57tgeo': 'Value_vxqb',
-        # 'radio_group_62waaf': 'Value_pjxm',
-        # 'radio_group_75tpzp': 'Value_huvw',
-        # 'radio_group_77vgzg': 'Value_rjkp',
-        # 'radio_group_78rsrq': 'Value_mfo',
-        # 'radio_group_86tbnz': 'Value_abgf',
-        # 'radio_group_88ustu': 'Value_lirc',
-        # 'radio_group_89dttg': 'Value_neml',
-        # 'radio_group_91molt': 'Value_pkjn',
         "Caixa de sele#C3#A7#C3#A3o 1_3": "Yes",
         "Caixa de sele#C3#A7#C3#A3o 2_4": "Yes",
         "Caixa de sele#C3#A7#C3#A3o 3_3": "Yes",
@@ -359,12 +377,18 @@ def processar():
     rename_file_name = dados_bitrix.get("UF_CRM_1697762313423", "Campo não encontrado")
     preencher_campos(pdf_path, novos_campos_valores, rename_file_name)
     pdf_new_path = f"{rename_file_name}" + pdf_path.split("\\")[-1]
-    encoded_file = file_to_base64(pdf_new_path)
-    upload_file_to_bitrix(negocio_id, pdf_new_path, encoded_file)
 
-    logger.info("PDF processado com sucesso.")
-    return jsonify({"status": "PDF processado com sucesso."})
+    # Comprimir o PDF
+    # Comprimir o PDF com Ghostscript
+    compressed_pdf_path = pdf_new_path.replace(".pdf", "_compressed.pdf")
+    compressed_pdf_path = comprimir_pdf_com_ghostscript(pdf_new_path, compressed_pdf_path)
 
+
+    encoded_file = file_to_base64(compressed_pdf_path)
+    upload_file_to_bitrix(negocio_id, compressed_pdf_path, encoded_file)
+
+    logger.info("PDF processado e comprimido com sucesso.")
+    return jsonify({"status": "PDF processado e comprimido com sucesso."})
 
 if __name__ == "__main__":
     app.run(port=6686, host="0.0.0.0")
