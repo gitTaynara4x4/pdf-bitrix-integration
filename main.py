@@ -281,7 +281,7 @@ def comprimir_pdf_com_ghostscript(input_path, output_path):
     """
     try:
         command = [
-            "gswin64c",  # Certifique-se de que o Ghostscript está instalado e configurado no PATH
+            "gs",  # Certifique-se de que o Ghostscript está instalado e configurado no PATH
             "-sDEVICE=pdfwrite",
             "-dCompatibilityLevel=1.4",
             "-dPDFSETTINGS=/ebook",  # Nível de compressão (pode usar /screen, /ebook, /printer ou /prepress)
