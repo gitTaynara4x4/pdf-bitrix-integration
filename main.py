@@ -157,7 +157,9 @@ def obter_partes_data(data_str):
     return separar_data(data_formatada)
 
 
-def atualizar_valores_com_base_no_status(dados_bitrix, novos_campos_valores):
+def atualizar_valores_com_base_no_status(
+    dados_bitrix, novos_campos_valores, status_param
+):
     status = dados_bitrix.get("UF_CRM_1713214941", None)
     if isinstance(status, list):
         status = status[0] if status else ""
@@ -169,8 +171,9 @@ def atualizar_valores_com_base_no_status(dados_bitrix, novos_campos_valores):
         novos_campos_valores["quatro"] = "Yes"  # 400
     elif status == "48470":
         novos_campos_valores["cinco"] = "Yes"  # 500
-    elif status == "34668":
+    elif status == "48472":
         novos_campos_valores["seis"] = "Yes"  # 600
+        novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 3"] = "Yes"  # 600
     elif status == "48474":
         novos_campos_valores["sete"] = "Yes"  # 700
     elif status == "48476":
@@ -188,12 +191,21 @@ def atualizar_valores_com_base_no_status(dados_bitrix, novos_campos_valores):
     # novos_campos_valores['oito'] = "Yes" #800
     # novos_campos_valores['giga_um'] = "Yes" #1000
 
-    novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 11"] = "Yes"
+    novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 11"] = (
+        "Yes" if status_param == "original" else "No"
+    )
     novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 12_3"] = "Yes"
     novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 15_2"] = "Yes"
 
+    novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 4"] = (
+        "Yes" if status_param == "original" and status == "48476" else "No"
+    )
+
     for i in range(7):
         novos_campos_valores[f"ciente{i}"] = "Yes"
+
+    for j in range(5):
+        novos_campos_valores[f"declaro{j}"] = "Yes"
 
     return novos_campos_valores
 
@@ -251,12 +263,16 @@ def atualizar_campos_com_localizacao(dados_bitrix, novos_campos_valores):
     estado = obter_estado_por_cep(cep)
     if cidade:
         novos_campos_valores["Caixa de texto 13"] = cidade
+        novos_campos_valores["cidade"] = cidade
     else:
         novos_campos_valores["Caixa de texto 13"] = "CEP não encontrado"
+        novos_campos_valores["cidade"] = "CEP não encontrado"
     if estado:
         novos_campos_valores["Caixa de texto 14"] = estado
+        novos_campos_valores["estado"] = estado
     else:
         novos_campos_valores["Caixa de texto 14"] = "CEP não encontrado"
+        novos_campos_valores["estado"] = "CEP não encontrado"
     return novos_campos_valores
 
 
@@ -268,12 +284,15 @@ def atualizar_campos_com_base_no_id(dados_bitrix, novos_campos_valores):
         novos_campos_valores["fem"] = "Yes"
     return novos_campos_valores
 
+
 def file_to_base64(file_path):
     with open(file_path, "rb") as file:
         return base64.b64encode(file.read()).decode("utf-8")
 
+
 import subprocess
 import os
+
 
 def comprimir_pdf_com_ghostscript(input_path, output_path):
     """
@@ -302,7 +321,26 @@ def comprimir_pdf_com_ghostscript(input_path, output_path):
 @app.route("/processar", methods=["POST"])
 def processar():
     negocio_id = request.args.get("negocio_id")
-    pdf_path = "Termo Algar Telecom.pdf"
+
+    url = (
+        f"{BASE_URL_API_BITRIX}/{PROFILE}/{CODIGO_BITRIX}/crm.deal.get?ID={negocio_id}"
+    )
+
+    res = requests.get(url)
+
+    status = (
+        "600" if res.json()["result"]["UF_CRM_1713214941"][0] == 48472 else "original"
+    )
+
+    logger.info(f"OLHE:   {res.json()['result']['UF_CRM_1713214941']}")
+
+    pdf_path = (
+        "Termo Algar Telecom.pdf"
+        if status == "original"
+        else "Termo Algar Telecom 2_.pdf"
+    )
+
+    logger.info(f"STATUS: {status}")
 
     if not negocio_id or not pdf_path:
         logger.error("Parâmetros inválidos fornecidos.")
@@ -332,39 +370,70 @@ def processar():
     data_str = dados_bitrix.get("UF_CRM_1723557410", "")
     dia, mes, ano = obter_partes_data(data_str)
 
-    novos_campos_valores = {
-        "Caixa de texto 8": dados_bitrix.get("UF_CRM_1697807340141", ""),
-        "dinheiro": dados_bitrix.get("OPPORTUNITY", ""),
-        "Caixa de texto 1": dados_bitrix.get(
-            "UF_CRM_1697762313423", "Campo não encontrado"
-        ),
-        "Caixa de texto 5": dia,
-        "Caixa de texto 6": mes,
-        "Caixa de texto 7": ano,
-        "Caixa de texto 3": dados_bitrix.get("UF_CRM_1697807353336", ""),
-        "Caixa de texto 2": dados_bitrix.get("UF_CRM_1697807372536", ""),
-        "Caixa de texto 29": dados_bitrix.get("UF_CRM_1697763267151", ""),
-        "Caixa de texto 9": dados_bitrix.get("UF_CRM_1698698407472", ""),
-        "Caixa de texto 21": dados_bitrix.get("UF_CRM_1697807340141", ""),
-        "Caixa de texto 4": dados_bitrix.get("UF_CRM_1698688252221", ""),
-        "Caixa de texto 10": dados_bitrix.get("UF_CRM_1700661252544", ""),
-        "Caixa de texto 11": dados_bitrix.get("UF_CRM_1700661287551", ""),
-        "Caixa de texto 12": dados_bitrix.get("UF_CRM_1700661275591", ""),
-        "Caixa de texto 15": dados_bitrix.get("UF_CRM_1700661314351", ""),
-        "Caixa de sele#C3#A7#C3#A3o 1_3": "Yes",
-        "Caixa de sele#C3#A7#C3#A3o 2_4": "Yes",
-        "Caixa de sele#C3#A7#C3#A3o 3_3": "Yes",
-        "Caixa de sele#C3#A7#C3#A3o 4_4": "Yes",
-        "Caixa de texto 1_3": formatar_data_para_pdf(
-            dados_bitrix.get("UF_CRM_1706040523430", "")
-        ),
-        "Caixa de texto 1_2": formatar_data_para_pdf(
-            dados_bitrix.get("UF_CRM_1706040523430", "")
-        ),
-    }
+    novos_campos_valores = None
+
+    if status == "original":
+        novos_campos_valores = {
+            "Caixa de texto 8": dados_bitrix.get("UF_CRM_1697807340141", ""),
+            "dinheiro": dados_bitrix.get("OPPORTUNITY", ""),
+            "Caixa de texto 1": dados_bitrix.get(
+                "UF_CRM_1697762313423", "Campo não encontrado"
+            ),
+            "Caixa de texto 5": dia,
+            "Caixa de texto 6": mes,
+            "Caixa de texto 7": ano,
+            "Caixa de texto 3": dados_bitrix.get("UF_CRM_1697807353336", ""),
+            "Caixa de texto 2": dados_bitrix.get("UF_CRM_1697807372536", ""),
+            "Caixa de texto 29": dados_bitrix.get("UF_CRM_1697763267151", ""),
+            "Caixa de texto 9": dados_bitrix.get("UF_CRM_1698698407472", ""),
+            "Caixa de texto 21": dados_bitrix.get("UF_CRM_1697807340141", ""),
+            "Caixa de texto 4": dados_bitrix.get("UF_CRM_1698688252221", ""),
+            "Caixa de texto 10": dados_bitrix.get("UF_CRM_1700661252544", ""),
+            "Caixa de texto 11": dados_bitrix.get("UF_CRM_1700661287551", ""),
+            "Caixa de texto 12": dados_bitrix.get("UF_CRM_1700661275591", ""),
+            "Caixa de texto 15": dados_bitrix.get("UF_CRM_1700661314351", ""),
+            "Caixa de sele#C3#A7#C3#A3o 1_3": "Yes",
+            "Caixa de sele#C3#A7#C3#A3o 2_4": "Yes",
+            "Caixa de sele#C3#A7#C3#A3o 3_3": "Yes",
+            "Caixa de sele#C3#A7#C3#A3o 4_4": "Yes",
+            "Caixa de texto 1_3": formatar_data_para_pdf(
+                dados_bitrix.get("UF_CRM_1706040523430", "")
+            ),
+            "Caixa de texto 1_2": formatar_data_para_pdf(
+                dados_bitrix.get("UF_CRM_1706040523430", "")
+            ),
+        }
+    else:
+        novos_campos_valores = {
+            "email": dados_bitrix.get("UF_CRM_1697807340141", ""),
+            "total": dados_bitrix.get("OPPORTUNITY", ""),
+            "nome": dados_bitrix.get("UF_CRM_1697762313423", "Campo não encontrado"),
+            "dia": dia,
+            "mes": mes,
+            "ano": ano,
+            "cpf": dados_bitrix.get("UF_CRM_1697807353336", ""),
+            "rg": dados_bitrix.get("UF_CRM_1697807372536", ""),
+            "mae": dados_bitrix.get("UF_CRM_1697763267151", ""),
+            "telefone": dados_bitrix.get("UF_CRM_1698698407472", ""),
+            "email_receber": dados_bitrix.get("UF_CRM_1697807340141", ""),
+            "endereco": dados_bitrix.get("UF_CRM_1698688252221", ""),
+            "numero": dados_bitrix.get("UF_CRM_1700661252544", ""),
+            "bairro": dados_bitrix.get("UF_CRM_1700661287551", ""),
+            "complemento": dados_bitrix.get("UF_CRM_1700661275591", ""),
+            "cep": dados_bitrix.get("UF_CRM_1700661314351", ""),
+            "beneficio": "Yes",
+            "declaro": "Yes",
+            "24meses": "Yes",
+            "data1": formatar_data_para_pdf(
+                dados_bitrix.get("UF_CRM_1706040523430", "")
+            ),
+            "data2": formatar_data_para_pdf(
+                dados_bitrix.get("UF_CRM_1706040523430", "")
+            ),
+        }
 
     novos_campos_valores = atualizar_valores_com_base_no_status(
-        dados_bitrix, novos_campos_valores
+        dados_bitrix, novos_campos_valores, status
     )
     novos_campos_valores = atualizar_campos_com_localizacao(
         dados_bitrix, novos_campos_valores
@@ -381,14 +450,16 @@ def processar():
     # Comprimir o PDF
     # Comprimir o PDF com Ghostscript
     compressed_pdf_path = pdf_new_path.replace(".pdf", "_compressed.pdf")
-    compressed_pdf_path = comprimir_pdf_com_ghostscript(pdf_new_path, compressed_pdf_path)
-
+    compressed_pdf_path = comprimir_pdf_com_ghostscript(
+        pdf_new_path, compressed_pdf_path
+    )
 
     encoded_file = file_to_base64(compressed_pdf_path)
     upload_file_to_bitrix(negocio_id, compressed_pdf_path, encoded_file)
 
     logger.info("PDF processado e comprimido com sucesso.")
     return jsonify({"status": "PDF processado e comprimido com sucesso."})
+
 
 if __name__ == "__main__":
     app.run(port=6686, host="0.0.0.0")
