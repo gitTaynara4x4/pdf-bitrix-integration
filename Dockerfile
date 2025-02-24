@@ -13,6 +13,6 @@ ENV PORT=${PORT}
 
 COPY . /app
 
-EXPOSE 6686
+EXPOSE 1473
 
 CMD ["python", "main.py"]
