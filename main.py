@@ -462,4 +462,4 @@ def processar():
 
 
 if __name__ == "__main__":
-    app.run(port=6686, host="0.0.0.0")
+    app.run(port=1473, host="0.0.0.0")
