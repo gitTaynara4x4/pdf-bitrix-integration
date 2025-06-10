@@ -10,25 +10,17 @@ from logging.handlers import RotatingFileHandler
 import base64
 import subprocess
 
-# Configuração do Flask
 app = Flask(__name__)
 
-# Configuração do Logging
 log_formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-
-# Configura o handler para salvar logs em arquivo
 file_handler = RotatingFileHandler("app.log", maxBytes=10000000, backupCount=5)
 file_handler.setFormatter(log_formatter)
 file_handler.setLevel(logging.DEBUG)
-
-# Configura o handler para console
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 console_handler.setLevel(logging.DEBUG)
-
-# Adiciona os handlers ao logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(file_handler)
@@ -182,14 +174,6 @@ def atualizar_valores_com_base_no_status(
         novos_campos_valores["giga_um"] = "Yes"  # 1000
     else:
         logger.warning(f"Status '{status}' não corresponde a nenhum valor conhecido.")
-
-    # novos_campos_valores['tres'] = "Yes" #300
-    # novos_campos_valores['quatro'] = "Yes" #400
-    # novos_campos_valores['cinco'] = "Yes" #500
-    # novos_campos_valores['seis'] = "Yes" #600
-    # novos_campos_valores['sete'] = "Yes" #700
-    # novos_campos_valores['oito'] = "Yes" #800
-    # novos_campos_valores['giga_um'] = "Yes" #1000
 
     novos_campos_valores["Caixa de sele#C3#A7#C3#A3o 11"] = (
         "Yes" if status_param == "original" else "No"
